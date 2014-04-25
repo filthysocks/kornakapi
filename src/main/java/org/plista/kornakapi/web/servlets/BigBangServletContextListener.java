@@ -155,10 +155,11 @@ public class BigBangServletContextListener implements ServletContextListener {
             createEmptyFactorization(persistence);
           }
           StreamingKMeansClassifierModel model = new StreamingKMeansClassifierModel(conf.getStorageConfiguration()); 
+          StreamingKMeansClassifierRecommender recommender = new StreamingKMeansClassifierRecommender(model);
           StreamingKMeansClustererTrainer clusterer = new StreamingKMeansClustererTrainer( streamingKMeansClustererConf, model);
           trainers.put(name,clusterer);
           
-          StreamingKMeansClassifierRecommender recommender = new StreamingKMeansClassifierRecommender(model);
+         
           recommenders.put(name, recommender);
           
           String cronExpression = streamingKMeansClustererConf.getRetrainCronExpression();

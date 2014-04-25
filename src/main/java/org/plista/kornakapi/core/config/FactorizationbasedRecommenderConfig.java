@@ -15,6 +15,23 @@
 
 package org.plista.kornakapi.core.config;
 
+import java.io.File;
+import java.io.IOException;
+
+import org.apache.mahout.cf.taste.common.TasteException;
+import org.apache.mahout.cf.taste.impl.common.FastByIDMap;
+import org.apache.mahout.cf.taste.impl.recommender.svd.Factorization;
+import org.apache.mahout.cf.taste.impl.recommender.svd.FilePersistenceStrategy;
+import org.apache.mahout.cf.taste.impl.recommender.svd.PersistenceStrategy;
+import org.apache.mahout.cf.taste.model.DataModel;
+import org.apache.mahout.cf.taste.recommender.CandidateItemsStrategy;
+import org.plista.kornakapi.KornakapiRecommender;
+import org.plista.kornakapi.core.recommender.CachingAllUnknownItemsCandidateItemsStrategy;
+import org.plista.kornakapi.core.recommender.FoldingFactorizationBasedRecommender;
+import org.plista.kornakapi.core.training.AbstractTrainer;
+import org.plista.kornakapi.core.training.FactorizationbasedInMemoryTrainer;
+import org.plista.kornakapi.core.training.MultithreadedItembasedInMemoryTrainer;
+
 /** configuration for recommenders that use matrix factorization */
 public class FactorizationbasedRecommenderConfig extends RecommenderConfig {
 
@@ -63,4 +80,48 @@ public class FactorizationbasedRecommenderConfig extends RecommenderConfig {
   public void setAlpha(double alpha) {
     this.alpha = alpha;
   }
+  
+
+
+	@Override
+	public KornakapiRecommender buildRecommenderFromConfig(Configuration conf,
+			DataModel persistentData) throws IOException, TasteException {
+		String name = this.getName();
+	
+		File modelFile = new File(conf.getModelDirectory(), name
+				+ ".model");
+	
+		PersistenceStrategy persistence = new FilePersistenceStrategy(
+				modelFile);
+	
+		if (!modelFile.exists()) {
+			createEmptyFactorization(persistence);
+		}
+	
+		CandidateItemsStrategy allUnknownItemsStrategy = new CachingAllUnknownItemsCandidateItemsStrategy(
+				persistentData);
+	
+		FoldingFactorizationBasedRecommender svdRecommender = new FoldingFactorizationBasedRecommender(
+				persistentData, allUnknownItemsStrategy, persistence);
+		
+		return svdRecommender;
+	}
+
+	public AbstractTrainer getTrainer(){
+		switch(trainer){
+		case "MultithreadedItembasedInMemoryTrainer":
+			return new FactorizationbasedInMemoryTrainer(this);
+		}
+		
+		throw new IllegalArgumentException(trainer + " is unkown");
+	}
+	
+	@Override
+	public void log() {
+		log.info(
+				"Created FactorizationBasedRecommender [{}] using [{}] features and [{}] iterations",
+				new Object[] { this.getName(),
+						this.getNumberOfFeatures(),
+						this.getNumberOfIterations() });
+	}
 }

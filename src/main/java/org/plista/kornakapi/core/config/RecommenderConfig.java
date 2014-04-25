@@ -15,16 +15,34 @@
 
 package org.plista.kornakapi.core.config;
 
+import java.io.IOException;
+
+import org.apache.mahout.cf.taste.common.TasteException;
+import org.apache.mahout.cf.taste.impl.common.FastByIDMap;
+import org.apache.mahout.cf.taste.impl.recommender.svd.Factorization;
+import org.apache.mahout.cf.taste.impl.recommender.svd.PersistenceStrategy;
+import org.apache.mahout.cf.taste.model.DataModel;
+import org.plista.kornakapi.KornakapiRecommender;
+import org.plista.kornakapi.core.training.AbstractTrainer;
+import org.plista.kornakapi.web.servlets.BigBangServletContextListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** basic configuration for all recommenders */
 public abstract class RecommenderConfig {
 
   private String name;
+  
+  protected String trainer;
 
   private String retrainCronExpression;
 
   private int retrainAfterPreferenceChanges = DONT_RETRAIN_ON_PREFERENCE_CHANGES;
 
   public static final int DONT_RETRAIN_ON_PREFERENCE_CHANGES = 0;
+  
+  protected static final Logger log = LoggerFactory
+			.getLogger(BigBangServletContextListener.class);
 
   public String getName() {
     return name;
@@ -49,4 +67,20 @@ public abstract class RecommenderConfig {
   public void setRetrainAfterPreferenceChanges(int retrainAfterPreferenceChanges) {
     this.retrainAfterPreferenceChanges = retrainAfterPreferenceChanges;
   }
+  
+	protected  void createEmptyFactorization(PersistenceStrategy strategy)
+			throws IOException {
+		strategy.maybePersist(new Factorization(new FastByIDMap<Integer>(0),
+				new FastByIDMap<Integer>(0), new double[0][0], new double[0][0]));
+	}
+  
+	public void setTrainer(String trainer) {
+		this.trainer = trainer;
+	}
+  abstract public AbstractTrainer getTrainer();
+	
+  abstract public void log();
+  
+  abstract public KornakapiRecommender buildRecommenderFromConfig(Configuration conf, DataModel persistentData ) throws IOException, TasteException;
+
 }

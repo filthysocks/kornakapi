@@ -40,6 +40,8 @@ public class Configuration {
   private List<FactorizationbasedRecommenderConfig> factorizationbasedRecommenders = Lists.newArrayList();
   private List<StreamingKMeansClustererConfig> streamingKMeansClusterers = Lists.newArrayList();
 
+  private List<RecommenderConfig> allRecommenders;
+  
   public static Configuration fromXML(String xml) {
     XStream serializer = new XStream();
     serializer.alias("configuration", Configuration.class);
@@ -48,6 +50,14 @@ public class Configuration {
     serializer.alias("streamingKMeansClusterer", StreamingKMeansClustererConfig.class);
 
     return (Configuration) serializer.fromXML(xml);
+  }
+  
+  public List<RecommenderConfig> getRecommender(){
+	  allRecommenders = Lists.newArrayList();
+	  allRecommenders.addAll(factorizationbasedRecommenders);
+	  allRecommenders.addAll(itembasedRecommenders);
+	  allRecommenders.addAll(streamingKMeansClusterers);
+	  return allRecommenders;
   }
 
   public String getModelDirectory() {
